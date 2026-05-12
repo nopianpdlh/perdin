@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Eye } from "lucide-react";
+import { EyeIcon, PlusIcon } from "@phosphor-icons/react";
 import { useAuth, usePerdin, useKota } from "@/lib/hooks";
 import { Perdin } from "@/lib/types";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
@@ -10,15 +10,17 @@ import StatusBadge from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
 import PageHeader from "@/components/PageHeader";
 import DetailPerdin from "@/components/DetailPerdin";
+import { TableSkeleton } from "@/components/LoadingState";
 
 export default function PerdinSayaPage() {
   const { session } = useAuth();
-  const { perdinList } = usePerdin();
-  const { kotaList } = useKota();
+  const { perdinList, loading: perdinLoading } = usePerdin();
+  const { kotaList, loading: kotaLoading } = useKota();
   const [detail, setDetail] = useState<Perdin | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("SEMUA");
 
   if (!session) return null;
+  if (perdinLoading || kotaLoading) return <TableSkeleton rows={6} cols={8} />;
 
   const myPerdin = perdinList
     .filter((p) => p.userId === session.userId)
@@ -40,25 +42,25 @@ export default function PerdinSayaPage() {
         action={
           <Link
             href="/dashboard/pengajuan"
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            className="btn-primary"
           >
-            <Plus size={16} />
+            <PlusIcon size={16} />
             Ajukan Perdin
           </Link>
         }
       />
 
       {/* Filter */}
-      <div className="flex gap-2 mb-4">
+      <div className="mb-4 flex gap-2" role="tablist" aria-label="Filter status perdin saya">
         {["SEMUA", "MENUNGGU", "DISETUJUI", "DITOLAK"].map((s) => (
           <button
             key={s}
             onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 text-xs rounded-full font-medium transition-colors ${
               filterStatus === s
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-            }`}
+                ? "chip-filter chip-filter-active"
+                : "chip-filter chip-filter-idle"
+              }`}
           >
             {s === "SEMUA" ? "Semua" : s.charAt(0) + s.slice(1).toLowerCase()}
             {s !== "SEMUA" && (
@@ -70,11 +72,11 @@ export default function PerdinSayaPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="table-shell overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr className="table-head-row">
                 <th className="px-4 py-3 text-left font-medium">No</th>
                 <th className="px-4 py-3 text-left font-medium">Tujuan</th>
                 <th className="px-4 py-3 text-left font-medium">Kota Tujuan</th>
@@ -124,11 +126,12 @@ export default function PerdinSayaPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => setDetail(p)}
-                        className="text-blue-500 hover:text-blue-700 transition-colors"
+                        className="icon-action"
                         title="Detail"
+                        aria-label={`Lihat detail perjalanan ${idx + 1}`}
                       >
-                        <Eye size={15} />
-                      </button>
+                         <EyeIcon size={15} />
+                       </button>
                     </td>
                   </tr>
                 ))

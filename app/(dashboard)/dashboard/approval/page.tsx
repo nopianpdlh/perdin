@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, CheckCircle, XCircle } from "lucide-react";
+import { CheckCircleIcon, EyeIcon, XCircleIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { useAuth, usePerdin, useKota } from "@/lib/hooks";
 import { Perdin } from "@/lib/types";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
@@ -10,11 +11,12 @@ import StatusBadge from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
 import PageHeader from "@/components/PageHeader";
 import DetailPerdin from "@/components/DetailPerdin";
+import { TableSkeleton } from "@/components/LoadingState";
 
 export default function ApprovalPage() {
   const { session } = useAuth();
-  const { perdinList, updatePerdin } = usePerdin();
-  const { kotaList } = useKota();
+  const { perdinList, loading: perdinLoading, updatePerdin } = usePerdin();
+  const { kotaList, loading: kotaLoading } = useKota();
 
   const [detail, setDetail] = useState<Perdin | null>(null);
   const [approvalTarget, setApprovalTarget] = useState<{
@@ -50,6 +52,11 @@ export default function ApprovalPage() {
     });
     setApprovalTarget(null);
     setCatatan("");
+    toast.success(action === "DISETUJUI" ? "Pengajuan berhasil disetujui." : "Pengajuan berhasil ditolak.");
+  }
+
+  if (perdinLoading || kotaLoading) {
+    return <TableSkeleton rows={7} cols={8} />;
   }
 
   const menungguCount = perdinList.filter((p) => p.status === "MENUNGGU").length;
@@ -62,33 +69,33 @@ export default function ApprovalPage() {
       />
 
       {menungguCount > 0 && (
-        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-sm text-yellow-800">
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" role="status" aria-live="polite">
           Terdapat <strong>{menungguCount}</strong> pengajuan yang menunggu persetujuan.
         </div>
       )}
 
       {/* Filter */}
-      <div className="flex gap-2 mb-4">
+      <div className="mb-4 flex gap-2" role="tablist" aria-label="Filter status approval">
         {["MENUNGGU", "DISETUJUI", "DITOLAK", "SEMUA"].map((s) => (
           <button
             key={s}
             onClick={() => setFilterStatus(s)}
-            className={`px-3 py-1.5 text-xs rounded-full font-medium transition-colors ${
-              filterStatus === s
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-            }`}
+              className={`px-3 py-1.5 text-xs rounded-full font-medium transition-colors ${
+                filterStatus === s
+                  ? "chip-filter chip-filter-active"
+                  : "chip-filter chip-filter-idle"
+              }`}
           >
             {s === "SEMUA" ? "Semua" : s.charAt(0) + s.slice(1).toLowerCase()}
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="table-shell overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+                <tr className="table-head-row">
                 <th className="px-4 py-3 text-left font-medium">No</th>
                 <th className="px-4 py-3 text-left font-medium">Pegawai</th>
                 <th className="px-4 py-3 text-left font-medium">Tujuan</th>
@@ -142,7 +149,7 @@ export default function ApprovalPage() {
                           className="text-blue-500 hover:text-blue-700 transition-colors"
                           title="Detail"
                         >
-                          <Eye size={15} />
+                          <EyeIcon size={15} />
                         </button>
                         {p.status === "MENUNGGU" && (
                           <>
@@ -156,7 +163,7 @@ export default function ApprovalPage() {
                               className="text-green-500 hover:text-green-700 transition-colors"
                               title="Setujui"
                             >
-                              <CheckCircle size={15} />
+                              <CheckCircleIcon size={15} />
                             </button>
                             <button
                               onClick={() =>
@@ -168,7 +175,7 @@ export default function ApprovalPage() {
                               className="text-red-400 hover:text-red-600 transition-colors"
                               title="Tolak"
                             >
-                              <XCircle size={15} />
+                              <XCircleIcon size={15} />
                             </button>
                           </>
                         )}
@@ -199,7 +206,7 @@ export default function ApprovalPage() {
                 }}
                 className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700"
               >
-                <CheckCircle size={16} />
+                 <CheckCircleIcon size={16} />
                 Setujui
               </button>
               <button
@@ -209,7 +216,7 @@ export default function ApprovalPage() {
                 }}
                 className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-700"
               >
-                <XCircle size={16} />
+                 <XCircleIcon size={16} />
                 Tolak
               </button>
             </div>
@@ -233,7 +240,7 @@ export default function ApprovalPage() {
         >
           <div className="space-y-4">
             {/* Summary */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-1.5 text-sm">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-1.5 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">Pegawai</span>
                 <span className="font-medium">

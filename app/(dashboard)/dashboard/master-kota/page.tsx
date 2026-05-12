@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Globe } from "lucide-react";
+import { GlobeHemisphereWestIcon, NotePencilIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { useKota } from "@/lib/hooks";
 import { Kota } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 import Modal from "@/components/Modal";
 import PageHeader from "@/components/PageHeader";
+import { TableSkeleton } from "@/components/LoadingState";
 
 const EMPTY_FORM: Omit<Kota, "id"> = {
   nama: "",
@@ -18,7 +20,7 @@ const EMPTY_FORM: Omit<Kota, "id"> = {
 };
 
 export default function MasterKotaPage() {
-  const { kotaList, addKota, updateKota, deleteKota } = useKota();
+  const { kotaList, loading, addKota, updateKota, deleteKota } = useKota();
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<Kota | null>(null);
   const [form, setForm] = useState<Omit<Kota, "id">>(EMPTY_FORM);
@@ -55,15 +57,22 @@ export default function MasterKotaPage() {
     e.preventDefault();
     if (editTarget) {
       updateKota({ ...form, id: editTarget.id });
+      toast.success("Data kota diperbarui.");
     } else {
       addKota({ ...form, id: generateId() });
+      toast.success("Kota berhasil ditambahkan.");
     }
     setShowModal(false);
   }
 
   function handleDelete(id: string) {
     deleteKota(id);
+    toast.success("Kota berhasil dihapus.");
     setDeleteConfirm(null);
+  }
+
+  if (loading) {
+    return <TableSkeleton rows={6} cols={7} />;
   }
 
   return (
@@ -74,9 +83,9 @@ export default function MasterKotaPage() {
         action={
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            className="btn-primary"
           >
-            <Plus size={16} />
+            <PlusIcon size={16} />
             Tambah Kota
           </button>
         }
@@ -89,16 +98,17 @@ export default function MasterKotaPage() {
           placeholder="Cari nama kota, provinsi, atau pulau..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-sm border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Cari kota"
+          className="input-base w-full max-w-sm"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="table-shell overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr className="table-head-row">
                 <th className="px-4 py-3 text-left font-medium">No</th>
                 <th className="px-4 py-3 text-left font-medium">Nama Kota</th>
                 <th className="px-4 py-3 text-left font-medium">Provinsi</th>
@@ -126,7 +136,7 @@ export default function MasterKotaPage() {
                     <td className="px-4 py-3 font-medium text-gray-800">
                       <div className="flex items-center gap-2">
                         {kota.luarNegeri && (
-                          <Globe size={14} className="text-blue-500" />
+                          <GlobeHemisphereWestIcon size={14} className="text-cyan-600" />
                         )}
                         {kota.nama}
                       </div>
@@ -157,14 +167,14 @@ export default function MasterKotaPage() {
                           className="text-blue-500 hover:text-blue-700 transition-colors"
                           title="Edit"
                         >
-                          <Pencil size={15} />
+                          <NotePencilIcon size={15} />
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(kota.id)}
                           className="text-red-400 hover:text-red-600 transition-colors"
                           title="Hapus"
                         >
-                          <Trash2 size={15} />
+                          <TrashIcon size={15} />
                         </button>
                       </div>
                     </td>

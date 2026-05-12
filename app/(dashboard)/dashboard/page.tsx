@@ -1,29 +1,75 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, CheckSquare, Clock, Users } from "lucide-react";
+import {
+  ArrowClockwiseIcon,
+  CheckSquareIcon,
+  ClockCountdownIcon,
+  FileTextIcon,
+  TrendUpIcon,
+  UsersThreeIcon,
+  XCircleIcon,
+} from "@phosphor-icons/react";
 import { useAuth } from "@/lib/hooks";
 import { getPerdinList, getUsers } from "@/lib/storage";
 import { Perdin } from "@/lib/types";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
 import StatusBadge from "@/components/StatusBadge";
+import { TableSkeleton } from "@/components/LoadingState";
 
 interface StatCard {
   label: string;
   value: number | string;
   icon: React.ReactNode;
-  color: string;
+  tone: "primary" | "cool" | "calm" | "ink";
+  note: string;
 }
+
+const TONE_STYLE: Record<StatCard["tone"], { rail: string; panel: string; icon: string }> = {
+  primary: {
+    rail: "before:bg-cyan-600",
+    panel: "bg-cyan-50 border-cyan-100",
+    icon: "text-cyan-700",
+  },
+  cool: {
+    rail: "before:bg-cyan-500",
+    panel: "bg-cyan-50/60 border-cyan-100",
+    icon: "text-cyan-700",
+  },
+  calm: {
+    rail: "before:bg-sky-500",
+    panel: "bg-sky-50 border-sky-100",
+    icon: "text-sky-700",
+  },
+  ink: {
+    rail: "before:bg-slate-500",
+    panel: "bg-slate-100/70 border-slate-200",
+    icon: "text-slate-700",
+  },
+};
 
 export default function DashboardPage() {
   const { session } = useAuth();
   const [perdinList, setPerdinList] = useState<Perdin[]>([]);
   const [userCount, setUserCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  function hydrateDashboard() {
+    try {
+      setLoadError(null);
+      const all = getPerdinList();
+      setPerdinList(all);
+      setUserCount(getUsers().length);
+    } catch {
+      setLoadError("Data dashboard tidak dapat dimuat. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    const all = getPerdinList();
-    setPerdinList(all);
-    setUserCount(getUsers().length);
+    hydrateDashboard();
   }, []);
 
   if (!session) return null;
@@ -42,36 +88,41 @@ export default function DashboardPage() {
     {
       label: session.role === "PEGAWAI" ? "Perdin Saya" : "Total Perdin",
       value: myPerdin.length,
-      icon: <FileText size={22} />,
-      color: "bg-blue-500",
+      icon: <FileTextIcon size={22} />,
+      tone: "primary",
+      note: "Volume dokumen aktif",
     },
     {
       label: "Menunggu Approval",
       value: menunggu,
-      icon: <Clock size={22} />,
-      color: "bg-yellow-500",
+      icon: <ClockCountdownIcon size={22} />,
+      tone: "cool",
+      note: "Perlu tindak lanjut",
     },
     {
       label: "Disetujui",
       value: disetujui,
-      icon: <CheckSquare size={22} />,
-      color: "bg-green-500",
+      icon: <CheckSquareIcon size={22} />,
+      tone: "calm",
+      note: "Siap dieksekusi",
     },
     ...(session.role === "ADMIN"
       ? [
           {
             label: "Total User",
             value: userCount,
-            icon: <Users size={22} />,
-            color: "bg-purple-500",
+            icon: <UsersThreeIcon size={22} />,
+            tone: "ink" as const,
+            note: "Akun terdaftar",
           },
         ]
       : [
           {
             label: "Ditolak",
             value: ditolak,
-            icon: <FileText size={22} />,
-            color: "bg-red-500",
+            icon: <XCircleIcon size={22} />,
+            tone: "ink" as const,
+            note: "Butuh revisi pengajuan",
           },
         ]),
   ];
@@ -85,30 +136,62 @@ export default function DashboardPage() {
   const getUserName = (id: string) =>
     allUsers.find((u) => u.id === id)?.name ?? "-";
 
+  if (loading) {
+    return <TableSkeleton rows={6} cols={4} />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="surface-card p-8 max-w-xl">
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">Dashboard belum siap</h2>
+        <p className="text-sm text-slate-600 mb-6">{loadError}</p>
+        <button
+          onClick={() => {
+            setLoading(true);
+            hydrateDashboard();
+          }}
+          className="inline-flex items-center gap-2 rounded-lg bg-cyan-700 text-white px-4 py-2 text-sm hover:bg-cyan-800"
+        >
+          <ArrowClockwiseIcon size={16} />
+          Muat Ulang Data
+        </button>
+      </div>
+    );
+  }
+
+  const approvalRate = myPerdin.length > 0 ? Math.round((disetujui / myPerdin.length) * 100) : 0;
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard Operasional</h1>
+          <p className="text-sm text-slate-600 mt-1">
           Selamat datang, {session.name}
-        </p>
+          </p>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-800">
+          <TrendUpIcon size={14} />
+          Tingkat persetujuan: {approvalRate}%
+        </div>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4"
+            className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md before:absolute before:inset-y-0 before:left-0 before:w-1 ${TONE_STYLE[s.tone].panel} ${TONE_STYLE[s.tone].rail}`}
           >
-            <div
-              className={`${s.color} text-white rounded-lg p-3 flex-shrink-0`}
-            >
-              {s.icon}
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-800">{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-3xl font-semibold text-slate-900 leading-none">{s.value}</p>
+                <p className="text-sm font-medium text-slate-700 mt-2">{s.label}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{s.note}</p>
+              </div>
+              <div className={`rounded-xl border border-white/70 bg-white/80 p-2.5 ${TONE_STYLE[s.tone].icon}`}>
+                {s.icon}
+              </div>
             </div>
           </div>
         ))}

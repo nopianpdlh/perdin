@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { GlobeHemisphereWestIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/hooks";
 import { initStorage } from "@/lib/storage";
 
@@ -31,33 +33,23 @@ export default function LoginPage() {
     const ok = login(username, password);
     if (!ok) {
       setError("Username atau password salah.");
+      toast.error("Login gagal. Periksa username atau password.");
       setLoading(false);
       return;
     }
+    toast.success("Login berhasil. Mengarahkan ke dashboard...");
     router.replace("/dashboard");
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-cyan-950 via-cyan-900 to-cyan-800 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-cyan-100">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-xl mb-4">
-              <svg
-                className="w-8 h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-cyan-700 rounded-xl mb-4 text-white">
+              <GlobeHemisphereWestIcon size={30} weight="duotone" />
             </div>
             <h1 className="text-xl font-bold text-gray-800">PERDIN</h1>
             <p className="text-sm text-gray-500 mt-1">
@@ -83,7 +75,7 @@ export default function LoginPage() {
                 autoFocus
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 className="input-base"
                 placeholder="Masukkan username"
               />
             </div>
@@ -97,7 +89,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 className="input-base"
                 placeholder="Masukkan password"
               />
             </div>
@@ -105,7 +97,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 mt-2"
+               className="w-full bg-cyan-700 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-cyan-800 transition-colors disabled:opacity-60 mt-2"
             >
               {loading ? "Masuk..." : "Masuk"}
             </button>

@@ -6,11 +6,11 @@ const CONFIG: Record<
 > = {
   MENUNGGU: {
     label: "Menunggu",
-    className: "bg-yellow-100 text-yellow-800",
+    className: "bg-amber-100 text-amber-800",
   },
   DISETUJUI: {
     label: "Disetujui",
-    className: "bg-green-100 text-green-800",
+    className: "bg-cyan-100 text-cyan-800",
   },
   DITOLAK: {
     label: "Ditolak",
@@ -22,7 +22,7 @@ export default function StatusBadge({ status }: { status: StatusPerdin }) {
   const { label, className } = CONFIG[status];
   return (
     <span
-      className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-full ${className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${className}`}
     >
       {label}
     </span>

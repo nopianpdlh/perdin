@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAuth, useKota, usePerdin } from "@/lib/hooks";
 import { Kota } from "@/lib/types";
 import {
@@ -13,10 +14,11 @@ import {
   labelKlasifikasi,
 } from "@/lib/utils";
 import PageHeader from "@/components/PageHeader";
+import { PageLoadingState } from "@/components/LoadingState";
 
 export default function PengajuanPerdinPage() {
   const { session } = useAuth();
-  const { kotaList } = useKota();
+  const { kotaList, loading } = useKota();
   const { addPerdin } = usePerdin();
   const router = useRouter();
 
@@ -81,7 +83,10 @@ export default function PengajuanPerdinPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!session || !preview) return;
+    if (!session || !preview) {
+      toast.error("Lengkapi data pengajuan terlebih dahulu.");
+      return;
+    }
 
     const asal = kotaList.find((k) => k.id === form.kotaAsalId)!;
     const tujuan = kotaList.find((k) => k.id === form.kotaTujuanId)!;
@@ -105,6 +110,11 @@ export default function PengajuanPerdinPage() {
     });
 
     setSubmitted(true);
+    toast.success("Pengajuan perjalanan dinas berhasil dikirim.");
+  }
+
+  if (loading) {
+    return <PageLoadingState label="Memuat referensi kota..." />;
   }
 
   if (submitted) {
@@ -132,13 +142,13 @@ export default function PengajuanPerdinPage() {
                 });
                 setPreview(null);
               }}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="btn-secondary"
             >
               Ajukan Lagi
             </button>
             <button
               onClick={() => router.push("/dashboard/perdin-saya")}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="btn-primary"
             >
               Lihat Perdin Saya
             </button>
@@ -157,7 +167,7 @@ export default function PengajuanPerdinPage() {
         subtitle="Isi formulir berikut untuk mengajukan perjalanan dinas"
       />
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="surface-card p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Maksud Tujuan */}
           <div>
@@ -171,7 +181,7 @@ export default function PengajuanPerdinPage() {
               onChange={(e) =>
                 setForm({ ...form, maksudTujuan: e.target.value })
               }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="input-base w-full resize-none"
               placeholder="Jelaskan tujuan perjalanan dinas..."
             />
           </div>
@@ -188,7 +198,7 @@ export default function PengajuanPerdinPage() {
                 onChange={(e) =>
                   setForm({ ...form, kotaAsalId: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               >
                 <option value="">-- Pilih Kota --</option>
                 {kotaList.map((k) => (
@@ -208,7 +218,7 @@ export default function PengajuanPerdinPage() {
                 onChange={(e) =>
                   setForm({ ...form, kotaTujuanId: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               >
                 <option value="">-- Pilih Kota --</option>
                 {kotaList
@@ -236,7 +246,7 @@ export default function PengajuanPerdinPage() {
                 onChange={(e) =>
                   setForm({ ...form, tanggalBerangkat: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               />
             </div>
             <div>
@@ -251,14 +261,14 @@ export default function PengajuanPerdinPage() {
                 onChange={(e) =>
                   setForm({ ...form, tanggalPulang: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               />
             </div>
           </div>
 
           {/* Preview Kalkulasi */}
           {preview && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-4 space-y-2" role="status" aria-live="polite">
               <p className="text-sm font-semibold text-blue-800 mb-3">
                 Ringkasan Kalkulasi
               </p>
@@ -303,14 +313,14 @@ export default function PengajuanPerdinPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="btn-secondary"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={!preview}
-              className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Kirim Pengajuan
             </button>

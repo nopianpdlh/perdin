@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { NotePencilIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { useUsers, useAuth } from "@/lib/hooks";
 import { User, UserRole } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 import Modal from "@/components/Modal";
 import PageHeader from "@/components/PageHeader";
+import { TableSkeleton } from "@/components/LoadingState";
 
 const ROLES: UserRole[] = ["ADMIN", "PEGAWAI", "SDM"];
 
@@ -20,7 +22,7 @@ const EMPTY_FORM = {
 };
 
 export default function MasterUserPage() {
-  const { users, addUser, updateUser, deleteUser } = useUsers();
+  const { users, loading, addUser, updateUser, deleteUser } = useUsers();
   const { session } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<User | null>(null);
@@ -69,13 +71,16 @@ export default function MasterUserPage() {
     );
     if (duplicate) {
       setError("Username sudah digunakan.");
+      toast.error("Username sudah digunakan.");
       return;
     }
 
     if (editTarget) {
       updateUser({ ...form, id: editTarget.id });
+      toast.success("Data user diperbarui.");
     } else {
       addUser({ ...form, id: generateId() });
+      toast.success("User baru berhasil ditambahkan.");
     }
     setShowModal(false);
   }
@@ -84,13 +89,18 @@ export default function MasterUserPage() {
     // Jangan hapus diri sendiri
     if (id === session?.userId) return;
     deleteUser(id);
+    toast.success("User berhasil dihapus.");
     setDeleteConfirm(null);
   }
 
+  if (loading) {
+    return <TableSkeleton rows={7} cols={6} />;
+  }
+
   const roleColor: Record<UserRole, string> = {
-    ADMIN: "bg-purple-100 text-purple-700",
-    SDM: "bg-blue-100 text-blue-700",
-    PEGAWAI: "bg-green-100 text-green-700",
+    ADMIN: "bg-slate-100 text-slate-700",
+    SDM: "bg-cyan-100 text-cyan-700",
+    PEGAWAI: "bg-sky-100 text-sky-700",
   };
 
   return (
@@ -101,9 +111,9 @@ export default function MasterUserPage() {
         action={
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            className="btn-primary"
           >
-            <Plus size={16} />
+            <PlusIcon size={16} />
             Tambah User
           </button>
         }
@@ -111,19 +121,21 @@ export default function MasterUserPage() {
 
       <div className="mb-4">
         <input
+          id="search-user"
+          aria-label="Cari pengguna"
           type="text"
           placeholder="Cari nama, username, atau NIP..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-sm border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input-base w-full max-w-sm"
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="table-shell overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr className="table-head-row">
                 <th className="px-4 py-3 text-left font-medium">No</th>
                 <th className="px-4 py-3 text-left font-medium">NIP</th>
                 <th className="px-4 py-3 text-left font-medium">Nama</th>
@@ -133,31 +145,31 @@ export default function MasterUserPage() {
                 <th className="px-4 py-3 text-left font-medium">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
-                    className="px-4 py-10 text-center text-gray-400"
+                    className="px-4 py-10 text-center text-slate-400"
                   >
                     Tidak ada data user.
                   </td>
                 </tr>
               ) : (
                 filtered.map((user, idx) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600">
+                  <tr key={user.id} className="hover:bg-slate-50/70">
+                    <td className="px-4 py-3 text-slate-500">{idx + 1}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-600">
                       {user.nip}
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-800">
+                    <td className="px-4 py-3 font-medium text-slate-800">
                       {user.name}
                       {user.id === session?.userId && (
-                        <span className="ml-2 text-xs text-blue-500">(Anda)</span>
+                        <span className="ml-2 text-xs text-cyan-600">(Anda)</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{user.username}</td>
-                    <td className="px-4 py-3 text-gray-600">{user.divisi}</td>
+                    <td className="px-4 py-3 text-slate-600">{user.username}</td>
+                    <td className="px-4 py-3 text-slate-600">{user.divisi}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColor[user.role]}`}
@@ -169,18 +181,20 @@ export default function MasterUserPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => openEdit(user)}
-                          className="text-blue-500 hover:text-blue-700 transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil size={15} />
+                           className="icon-action"
+                           title="Edit"
+                           aria-label={`Edit user ${user.name}`}
+                         >
+                          <NotePencilIcon size={15} />
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(user.id)}
                           disabled={user.id === session?.userId}
-                          className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          title="Hapus"
-                        >
-                          <Trash2 size={15} />
+                           className="icon-action icon-action-danger disabled:opacity-30 disabled:cursor-not-allowed"
+                           title="Hapus"
+                           aria-label={`Hapus user ${user.name}`}
+                         >
+                          <TrashIcon size={15} />
                         </button>
                       </div>
                     </td>
@@ -207,27 +221,29 @@ export default function MasterUserPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="user-nip" className="block text-sm font-medium text-slate-700 mb-1">
                   NIP <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="user-nip"
                   required
                   type="text"
                   value={form.nip}
                   onChange={(e) => setForm({ ...form, nip: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input-base w-full"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="user-role" className="block text-sm font-medium text-slate-700 mb-1">
                   Role <span className="text-red-500">*</span>
                 </label>
                 <select
+                  id="user-role"
                   value={form.role}
                   onChange={(e) =>
                     setForm({ ...form, role: e.target.value as UserRole })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input-base w-full"
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
@@ -239,57 +255,61 @@ export default function MasterUserPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="user-name" className="block text-sm font-medium text-slate-700 mb-1">
                 Nama Lengkap <span className="text-red-500">*</span>
               </label>
               <input
+                id="user-name"
                 required
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="user-divisi" className="block text-sm font-medium text-slate-700 mb-1">
                 Divisi
               </label>
               <input
+                id="user-divisi"
                 type="text"
                 value={form.divisi}
                 onChange={(e) => setForm({ ...form, divisi: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="user-username" className="block text-sm font-medium text-slate-700 mb-1">
                 Username <span className="text-red-500">*</span>
               </label>
               <input
+                id="user-username"
                 required
                 type="text"
                 value={form.username}
                 onChange={(e) =>
                   setForm({ ...form, username: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="user-password" className="block text-sm font-medium text-slate-700 mb-1">
                 Password <span className="text-red-500">*</span>
               </label>
               <input
+                id="user-password"
                 required
                 type="password"
                 value={form.password}
                 onChange={(e) =>
                   setForm({ ...form, password: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-base w-full"
               />
             </div>
 
@@ -297,13 +317,13 @@ export default function MasterUserPage() {
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="btn-secondary"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="btn-primary"
               >
                 {editTarget ? "Simpan Perubahan" : "Tambah User"}
               </button>
@@ -319,19 +339,19 @@ export default function MasterUserPage() {
           onClose={() => setDeleteConfirm(null)}
           size="sm"
         >
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-slate-600 mb-6" role="alert">
             Apakah Anda yakin ingin menghapus user ini?
           </p>
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeleteConfirm(null)}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="btn-secondary"
             >
               Batal
             </button>
             <button
               onClick={() => handleDelete(deleteConfirm)}
-              className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
             >
               Hapus
             </button>

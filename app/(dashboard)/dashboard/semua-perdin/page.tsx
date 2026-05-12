@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye } from "lucide-react";
+import { EyeIcon } from "@phosphor-icons/react";
 import { usePerdin, useKota } from "@/lib/hooks";
 import { Perdin } from "@/lib/types";
 import { formatTanggal, formatRupiah } from "@/lib/utils";
@@ -10,13 +10,18 @@ import StatusBadge from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
 import PageHeader from "@/components/PageHeader";
 import DetailPerdin from "@/components/DetailPerdin";
+import { TableSkeleton } from "@/components/LoadingState";
 
 export default function SemuaPerdinPage() {
-  const { perdinList } = usePerdin();
-  const { kotaList } = useKota();
+  const { perdinList, loading: perdinLoading } = usePerdin();
+  const { kotaList, loading: kotaLoading } = useKota();
   const [detail, setDetail] = useState<Perdin | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("SEMUA");
   const [search, setSearch] = useState("");
+
+  if (perdinLoading || kotaLoading) {
+    return <TableSkeleton rows={7} cols={10} />;
+  }
 
   const allUsers = getUsers();
   const getUserName = (id: string) =>
@@ -51,7 +56,8 @@ export default function SemuaPerdinPage() {
           placeholder="Cari pegawai, kota, atau tujuan..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+          aria-label="Cari perjalanan dinas"
+          className="input-base w-64"
         />
         <div className="flex gap-2">
           {["SEMUA", "MENUNGGU", "DISETUJUI", "DITOLAK"].map((s) => (
@@ -60,9 +66,9 @@ export default function SemuaPerdinPage() {
               onClick={() => setFilterStatus(s)}
               className={`px-3 py-1.5 text-xs rounded-full font-medium transition-colors ${
                 filterStatus === s
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-              }`}
+                  ? "chip-filter chip-filter-active"
+                  : "chip-filter chip-filter-idle"
+                }`}
             >
               {s === "SEMUA" ? "Semua" : s.charAt(0) + s.slice(1).toLowerCase()}
             </button>
@@ -70,11 +76,11 @@ export default function SemuaPerdinPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="table-shell overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+               <tr className="table-head-row">
                 <th className="px-4 py-3 text-left font-medium">No</th>
                 <th className="px-4 py-3 text-left font-medium">Pegawai</th>
                 <th className="px-4 py-3 text-left font-medium">Tujuan</th>
@@ -130,11 +136,12 @@ export default function SemuaPerdinPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => setDetail(p)}
-                        className="text-blue-500 hover:text-blue-700 transition-colors"
+                        className="icon-action"
                         title="Detail"
+                        aria-label={`Lihat detail perjalanan ${idx + 1}`}
                       >
-                        <Eye size={15} />
-                      </button>
+                         <EyeIcon size={15} />
+                       </button>
                     </td>
                   </tr>
                 ))

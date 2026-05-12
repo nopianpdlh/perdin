@@ -60,9 +60,11 @@ export function useAuth() {
 // ── Users ─────────────────────────────────────────────────────
 export function useUsers() {
   const [users, setUsersState] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setUsersState(getUsers());
+    setLoading(false);
   }, []);
 
   const addUser = useCallback((user: User) => {
@@ -83,15 +85,17 @@ export function useUsers() {
     setUsersState(list);
   }, []);
 
-  return { users, addUser, updateUser, deleteUser };
+  return { users, loading, addUser, updateUser, deleteUser };
 }
 
 // ── Kota ──────────────────────────────────────────────────────
 export function useKota() {
   const [kotaList, setKotaList] = useState<Kota[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setKotaList(getKota());
+    setLoading(false);
   }, []);
 
   const addKota = useCallback((kota: Kota) => {
@@ -112,15 +116,17 @@ export function useKota() {
     setKotaList(list);
   }, []);
 
-  return { kotaList, addKota, updateKota, deleteKota };
+  return { kotaList, loading, addKota, updateKota, deleteKota };
 }
 
 // ── Perdin ────────────────────────────────────────────────────
 export function usePerdin() {
   const [perdinList, setPerdinList] = useState<Perdin[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setPerdinList(getPerdinList());
+    setLoading(false);
   }, []);
 
   const addPerdin = useCallback((perdin: Perdin) => {
@@ -143,5 +149,5 @@ export function usePerdin() {
     setPerdinList(list);
   }, []);
 
-  return { perdinList, addPerdin, updatePerdin, deletePerdin };
+  return { perdinList, loading, addPerdin, updatePerdin, deletePerdin };
 }
