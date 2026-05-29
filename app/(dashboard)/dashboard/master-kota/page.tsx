@@ -218,7 +218,7 @@ export default function MasterKotaPage() {
                   step="any"
                   value={form.latitude}
                   onChange={(e) =>
-                    setForm({ ...form, latitude: parseFloat(e.target.value) })
+                    setForm({ ...form, latitude: e.target.value === "" ? 0 : parseFloat(e.target.value) })
                   }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="-6.9175"
